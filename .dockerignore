@@ -1,0 +1,10 @@
+.git
+.gitignore
+bin/
+terraform/
+*.md
+CLAUDE.md
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars

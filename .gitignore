@@ -32,3 +32,8 @@ Thumbs.db
 # Build outputs
 /server
 /cli
+
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
