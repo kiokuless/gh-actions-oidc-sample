@@ -32,10 +32,10 @@ type AuthRequest struct {
 }
 
 type AuthResponse struct {
-	Success    bool         `json:"success"`
-	Message    string       `json:"message,omitempty"`
-	Claims     *oidc.Claims `json:"claims,omitempty"`
-	AccessToken string      `json:"access_token,omitempty"`
+	Success     bool         `json:"success"`
+	Message     string       `json:"message,omitempty"`
+	Claims      *oidc.Claims `json:"claims,omitempty"`
+	AccessToken string       `json:"access_token,omitempty"`
 }
 
 func main() {
@@ -61,6 +61,10 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(200)
+		w.Write([]byte("ok"))
+	})
 	mux.HandleFunc("/health", server.handleHealth)
 	mux.HandleFunc("/auth", server.handleAuth)
 
