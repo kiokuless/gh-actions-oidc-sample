@@ -9,10 +9,8 @@ GitHub Actions の OIDC (OpenID Connect) を使用した認証のサンプル実
 ├── cmd/
 │   ├── server/    # OIDC認証サーバー
 │   └── cli/       # CLIツール
-├── pkg/
-│   └── oidc/      # OIDC検証パッケージ
-└── .github/
-    └── workflows/ # GitHub Actionsワークフロー
+└── pkg/
+    └── oidc/      # OIDC検証パッケージ
 ```
 
 ## 仕組み
@@ -56,6 +54,41 @@ go build -o bin/cli ./cmd/cli
 ```
 
 ### GitHub Actions設定
+
+`.github/workflows/oidc-auth.yml` を作成:
+
+```yaml
+name: OIDC Authentication Example
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  OIDC_SERVER_URL: ${{ vars.OIDC_SERVER_URL }}
+
+jobs:
+  authenticate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get OIDC Token
+        id: get-token
+        run: |
+          OIDC_TOKEN=$(curl -sLS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=${{ env.OIDC_SERVER_URL }}" | jq -r '.value')
+          echo "token=$OIDC_TOKEN" >> $GITHUB_OUTPUT
+
+      - name: Authenticate with OIDC Server
+        run: |
+          curl -X POST "${{ env.OIDC_SERVER_URL }}/auth" \
+            -H "Content-Type: application/json" \
+            -d '{"token": "${{ steps.get-token.outputs.token }}"}'
+```
 
 1. リポジトリ変数 `OIDC_SERVER_URL` に認証サーバーのURLを設定
 2. ワークフローが自動でOIDCトークンを取得して認証
