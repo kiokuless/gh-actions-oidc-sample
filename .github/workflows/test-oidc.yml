@@ -1,0 +1,39 @@
+name: Test OIDC Authentication
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  test-auth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get OIDC Token
+        id: get-token
+        run: |
+          OIDC_TOKEN=$(curl -sLS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=${{ secrets.OIDC_SERVER_URL }}" | jq -r '.value')
+          echo "token=$OIDC_TOKEN" >> $GITHUB_OUTPUT
+          echo "Token retrieved (first 50 chars): ${OIDC_TOKEN:0:50}..."
+
+      - name: Authenticate with OIDC Server
+        run: |
+          RESPONSE=$(curl -s -X POST "${{ secrets.OIDC_SERVER_URL }}/auth" \
+            -H "Content-Type: application/json" \
+            -d '{"token": "${{ steps.get-token.outputs.token }}"}')
+
+          echo "Response: $RESPONSE"
+
+          SUCCESS=$(echo "$RESPONSE" | jq -r '.success')
+          if [ "$SUCCESS" = "true" ]; then
+            echo "Authentication successful!"
+            echo "$RESPONSE" | jq .
+          else
+            echo "Authentication failed!"
+            exit 1
+          fi
